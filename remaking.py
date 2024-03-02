@@ -11,7 +11,7 @@ class Controller:
     def add_flight_instance_list(self, flight_instance):
         self.__flight_instance_list.append(flight_instance)
 
-    def search_fight_instance_by_number(self, number):
+    def search_flight_instance_by_number(self, number):
         for flight_instance in self.__flight_instance_list:
             if number == flight_instance.flight_instance_no:
                 return flight_instance
@@ -29,7 +29,7 @@ class Controller:
         self.__user_list.append(user)
 
     def select_seat(self, flight_instance_no):
-        flight_instance = self.search_fight_instance_by_number(flight_instance_no)
+        flight_instance = self.search_flight_instance_by_number(flight_instance_no)
         seat_list = flight_instance.airplane.seat_list
         reserved_seat_list = flight_instance.reserved_seat_list
         seat_detail = {}
@@ -77,6 +77,29 @@ class Controller:
         booking.add_passenger(passenger)
         user.add_booking(booking)
         return booking
+
+    def pay_for_ticket(self, user_id, booking_no, citizen_id, row, column):
+        # controller1 = Controller('Earn')
+        # booking1 = Booking('B00001', 'Chaingmai', 'Bangkok', '18-01-24', '21-01-24', '07.30', '08.45')
+        # user1 = User('kwai@gmail','00001')
+        # controller1.add_user(user1)
+        # boarding_pass1 = Boardingpass('Chaingmai', 'Bangkok', '18-01-24', '21-01-24', '07.30', '08.45', 'gateB', 'FI00001', '1', 'C')
+        # passenger1 = Passenger('Male', '0123456789', 'David', '18-01-99', '1100012345001', boarding_pass1)
+        # booking1.add_passenger(passenger1) 
+        # user1.add_booking(booking1)
+        # seat3 = Seat("1","C","Hot Seat",1500)
+        # boarding_pass1.add_seat_list(seat3)
+        
+        user = controller1.search_user_by_user_id(user_id)
+        booking = user.search_booking_by_number(booking_no)
+        passenger = booking.search_passenger_by_citizen_id(citizen_id)
+        boarding_pass = passenger.boarding_pass
+        seat = boarding_pass.search_seat_by_row_column(row, column)
+        price = seat.price
+        print(price)
+        trans1 = Transaction(booking1, 1500, MobileBanking)
+        print(trans1.show_payment())
+
     
     @property
     def flight_instance_list(self):
@@ -123,6 +146,11 @@ class User(Guest):
     def add_booking(self, booking):
         self.__booking_list.append(booking)
 
+    def search_booking_by_number(self, booking_number):
+        for booking in self.__booking_list:
+            if isinstance(booking, Booking) and booking_number == booking.booking_no:
+                return booking
+
 class Promocode:
     promocode_list = []
 
@@ -167,6 +195,10 @@ class Booking:
         return self.__booking_no
 
     @property
+    def passenger_list(self):
+        return self.__passenger_list
+
+    @property
     def destination(self):
         return self.__destination
 
@@ -189,6 +221,15 @@ class Booking:
     @property
     def arriving_time(self):
         return self.__arriving_time
+
+    def add_passenger(self, passenger):
+        if isinstance(passenger, Passenger):
+            self.__passenger_list.append(passenger)
+
+    def search_passenger_by_citizen_id(self, citizen_id):
+        for passenger in self.__passenger_list:
+            if citizen_id == passenger.citizen_id:
+                return passenger
 
 class Payment:
     def __init__(self, user_id, amount, transaction_id, payment_type, payment_status):
@@ -232,8 +273,16 @@ class Passenger:
     def add_boardingpass(self, boardingpass):
         self.__boardingpass = boardingpass
 
+    @property
+    def boarding_pass(self):
+        return self.__boarding_pass
+
+    @property 
+    def citizen_id(self):
+        return self.__citizen_id
+
 class Boardingpass:
-    def __init__(self, destination, departure, departure_date, departure_time, destination_date, destination_time, gate, flight_no):
+    def __init__(self, destination, departure, departure_date, departure_time, destination_date, destination_time, gate, flight_no, row, column):
         self.__destination = destination
         self.__departure = departure
         self.__departure_date = departure_date
@@ -242,14 +291,34 @@ class Boardingpass:
         self.__destination_time = destination_time
         self.__gate = gate
         self.__flight_no = flight_no
+        self.__row = row
+        self.__column = column
+        self.__seat_list = []
         self.__luggage_list = []
         self.__show_seat = None
     
     def set_showseat(self, seat):
         self.__show_seat = seat
 
+    def search_seat_by_row_column(self, row, column):
+        for seat in self.__seat_list:
+            if seat.row == row and seat.column == column:
+                return seat
+                
     def add_luggage(self, luggage):
         self.__luggage_list.append(luggage)
+        
+    def add_seat_list(self, seat):
+        if isinstance(seat, Seat):
+            self.__seat_list.append(seat)
+
+    @property
+    def row(self):
+        return self.__row
+
+    @property
+    def column(self):
+        return self.__column
 
 class Luggage:
     luggage_number = 1
@@ -421,6 +490,10 @@ controller.add_flight_instance_list(Flight_instance(airport1, airport2, "F00001"
 controller.add_flight_instance_list(Flight_instance(airport2, airport1, "F00001", "FI00002", "25-02-2024", "17:45", "25-02-2024", "19:05", airplane2, "2"))
 controller.add_flight_instance_list(Flight_instance(airport1, airport2, "F00001", "FI00003", "25-02-2024", "22:35", "25-02-2024", "23:55", airplane3, "3"))
 
+trans1 = Transaction(booking1, 1500, MobileBanking)
+trans2 = Transaction(booking2, 2000, Card)
+
+
 #TODO fill_info testcase
 #temp = controller.fill_info_and_select_package('00001', 'FI00003', 'male', '0980111111', 'mark', '01/10/20', '19090021434941', 'big')
 #print(temp.destination.name)
@@ -437,3 +510,10 @@ controller.add_flight_instance_list(Flight_instance(airport1, airport2, "F00001"
 # controller.fill_info_and_select_package('00001', 'FI00003', 'male', '0980111111', 'mark', '01/10/20', '19090021434941', 'big')
 # controller.fill_info_and_select_package('00001', 'FI00003', 'male', '0980111111', 'mark', '01/10/20', '19090021434941', 'big')
 # print(user1.view_account_detail())
+
+#TODO show_payment
+# print(trans1.show_payment())
+# print(trans2.show_payment())
+
+#TODO pay_for_ticket
+#print(controller.pay_for_ticket('00001', 'B00001', '1100012345001', '1', 'C'))

@@ -1,7 +1,3 @@
-<<<<<<< Updated upstream
-=======
-
->>>>>>> Stashed changes
 class Controller:
     def __init__(self,name):
         self.__name = name
@@ -310,6 +306,12 @@ class ReservedSeat(Seat):
     def __init__(self, row, column):
         super().__init__(row, column, None , None)
     
+class Test:
+    def __init__(self):
+        pass
+
+
+    
 controller = Controller('AirAsia')
 
 airplane1 = Airplane('001',6)
@@ -343,12 +345,7 @@ controller.add_flight_instance_list(FlightInstance(airport1,airport2,"F00001","F
 # สร้าง ReservedSeat
 controller.flight_instance_list[0].add_reserved_seat(ReservedSeat("1","A"))
 
-<<<<<<< Updated upstream
-print(controller.select_seat("FI00001"))
-=======
 print(controller.select_seat("FI00001"))
 
-
-
-print("hi")
->>>>>>> Stashed changes
+#fdsgdsgs
+#fdsggsg

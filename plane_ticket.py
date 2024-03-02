@@ -8,27 +8,27 @@ class Controller:
         self.__admin_list = []
         self.__airport_list = []
 
-    def add_flight_instance_list(self,  flight_instance):
+    def add_flight_instance_list(self, flight_instance):
         self.__flight_instance_list.append(flight_instance)
 
-    def search_fight_instance_by_number(self,  number):
+    def search_fight_instance_by_number(self, number):
         for flight_instance in self.__flight_instance_list:
             if number == flight_instance.flight_instance_no:
                 return flight_instance
 
-    def search_flight(self,  departure,  destination,  departure_date,  total_passenger,  promocode = None):
+    def search_flight(self, departure, destination, departure_date, total_passenger, promocode = None):
         for that_flight in self.__flight_instance_list:
             if that_flight.departure_location == departure and that_flight.destination_location == destination and that_flight.departure_date == departure_date:
                 if (that_flight.total_seat - that_flight.count_reserved_list) >= total_passenger:
                     return that_flight
 
-    def add_admin(self,  admin):
+    def add_admin(self, admin):
         self.__admin_list.append(admin)
 
     def add_user(self, user):
         self.__user_list.append(user)
 
-    def select_seat(self,  flight_instance_no):
+    def select_seat(self, flight_instance_no):
         flight_instance = self.search_fight_instance_by_number(flight_instance_no)
         seat_list = flight_instance.airplane.seat_list
         reserved_seat_list = flight_instance.reserved_seat_list
@@ -60,16 +60,16 @@ class Controller:
         else:
             return "Error"
             
-    def fill_info_and_select_package(self, user_id, flight_no,  gender,  tel_no,  name,  birth_date,  citizen_id,  package = None):
+    def fill_info_and_select_package(self, user_id, flight_no, gender, tel_no, name, birth_date, citizen_id, package = None):
         flight = self.search_flight_instance_by_flight_instance_no(flight_no)
         user = self.search_user_by_user_id(user_id)
-        booking = Booking(Booking.booking_no,  flight.destination,  flight.departure,  flight.departure_date,  flight.departure_time,  flight.destination_date,  flight.destination_time)
+        booking = Booking(Booking.booking_no, flight.destination, flight.departure, flight.departure_date, flight.departure_time, flight.destination_date, flight.destination_time)
         Booking.booking_number += 1
-        passenger = Passenger(gender,  tel_no,  name,  birth_date,  citizen_id)
-        boardingpass = Boardingpass(flight.destination,  flight.departure,  flight.departure_date,  flight.departure_time,  flight.destination_date,  flight.destination_time,  flight.gate,  flight.flight_no)
+        passenger = Passenger(gender, tel_no, name, birth_date, citizen_id)
+        boardingpass = Boardingpass(flight.destination, flight.departure, flight.departure_date, flight.departure_time, flight.destination_date, flight.destination_time, flight.gate, flight.flight_no)
 
         if package != None:
-            luggage = Luggage(package,  Luggage.luggage_id)
+            luggage = Luggage(package, Luggage.luggage_id)
             Luggage.luggage_number += 1
             boardingpass.add_luggage(luggage)
     
@@ -97,20 +97,22 @@ class Guest:
         self.__guest_id = guest_id
 
 class User(Guest):
-    def __init__(self, email, user_id, ):
+    def __init__(self, email, user_id):
         self.__email = email
         self.__user_id = user_id
         self.__booking_list = []
     
-    def view_account_detail(self,  ):
+    def view_account_detail(self):
         booking_info_list = []
         for that_booking in self.__booking_list:
             booking_info = []
             booking_info.append(that_booking.booking_no)
-            booking_info.append(that_booking.departure)
-            booking_info.append(that_booking.destination)
-            booking_info.append(that_booking.departure_date_time)
-            booking_info.append(that_booking.arriving_date_time)
+            booking_info.append(that_booking.departure.name)
+            booking_info.append(that_booking.destination.name)
+            booking_info.append(that_booking.departure_date)
+            booking_info.append(that_booking.departure_time)
+            booking_info.append(that_booking.arriving_date)
+            booking_info.append(that_booking.arriving_time)
             booking_info_list.append(booking_info)
         return booking_info_list
 
@@ -124,7 +126,7 @@ class User(Guest):
 class Promocode:
     promocode_list = []
 
-    def __init__(self,  code,  type,  expire_date):
+    def __init__(self, code, type, expire_date):
         self.__code = code
         self.__type = type
         self.__expire_date = expire_date
@@ -133,14 +135,14 @@ class Promocode:
     @property
     def promocode_no(self):
         return self.__code
-    # def check_promocode(self,  input_code):
+    # def check_promocode(self, input_code):
     #     if input_code == self.__code:
     #         return True
 
 class Booking:
-    booking_number = 0
-    def __init__(self,  booking_no,  destination,  departure,  departure_date,  departure_time,  arriving_date,  arriving_time):
-        self.__booking_no = booking_no
+    booking_number = 1
+    def __init__(self, booking_no, destination, departure, departure_date, departure_time, arriving_date, arriving_time):
+        self.__booking_no = Booking.booking_number
         self.__passenger_list = []
         self.__destination = destination
         self.__departure = departure
@@ -251,7 +253,7 @@ class Boardingpass:
 
 class Luggage:
     luggage_number = 1
-    def __init__(self,  package,  luggage_id):
+    def __init__(self, package, luggage_id):
         self.__owner = None
         self.__package = package
         self.__luggage_id = luggage_id
@@ -263,7 +265,7 @@ class Luggage:
         return self.__luggage_id
 
 class Airport:
-    def __init__(self,  name):
+    def __init__(self, name):
         self.__name = name
         self.__current_airplane_list = []
 
@@ -275,7 +277,7 @@ class Airport:
         return self.__name
 
 class Flight:
-    def __init__(self, departure,  destination,  flight_no):
+    def __init__(self, departure, destination, flight_no):
         self.__departure = departure
         self.__destination = destination
         self.__flight_no = flight_no
@@ -292,8 +294,8 @@ class Flight:
         return self.__flight_no
 
 class Flight_instance(Flight):
-    def __init__(self,  departure,  destination,  flight_no,  flight_instance_no,  departure_date,  departure_time,  destination_date,  destination_time,  airplane,  gate):
-        super().__init__(departure,  destination,  flight_no)
+    def __init__(self, departure, destination, flight_no, flight_instance_no, departure_date, departure_time, destination_date, destination_time, airplane, gate):
+        super().__init__(departure, destination, flight_no)
         self.__flight_instance_no = flight_instance_no
         self.__departure_date = departure_date
         self.__departure_time = departure_time
@@ -338,7 +340,7 @@ class Flight_instance(Flight):
         return len(self.__reserved_seat_list)
 
 class Airplane:
-    def __init__(self,  airplane_id,  total_seat):
+    def __init__(self, airplane_id, total_seat):
         self.__airplane_id = airplane_id
         self.__total_seat = total_seat
         self.__seat_list = []
@@ -350,7 +352,7 @@ class Airplane:
     def total_seat(self):
         return self.__total_seat
 
-    def add_seat(self,  seat):
+    def add_seat(self, seat):
         self.__seat_list.append(seat)
 
 class Seat:
@@ -376,8 +378,8 @@ class Seat:
         return self.__price
 
 class ReservedSeat(Seat):
-    def __init__(self,  row,  column):
-        super().__init__(row,  column,  None ,  None)
+    def __init__(self, row, column):
+        super().__init__(row, column, None , None)
     
 class Test:
     def __init__(self):
@@ -416,14 +418,22 @@ airplane2.add_seat(Seat("2", "C", "Standard Seat", 1000))
 controller.add_admin(admin1)
 controller.add_user(user1)
 controller.add_flight_instance_list(Flight_instance(airport1, airport2, "F00001", "FI00001", "25-02-2024", "9:00", "25-02-2024", "10:20", airplane1, "1"))
-controller.add_flight_instance_list(Flight_instance(airport1, airport2, "F00001", "FI00002", "25-02-2024", "17:45", "25-02-2024", "19:05", airplane2, "2"))
+controller.add_flight_instance_list(Flight_instance(airport2, airport1, "F00001", "FI00002", "25-02-2024", "17:45", "25-02-2024", "19:05", airplane2, "2"))
 controller.add_flight_instance_list(Flight_instance(airport1, airport2, "F00001", "FI00003", "25-02-2024", "22:35", "25-02-2024", "23:55", airplane3, "3"))
 
-# temp = controller.fill_info_and_select_package('00001', 'FI00003', 'male', '0980111111', 'mark', '01/10/20', '19090021434941', 'big')
-# print(temp.destination.name)
+#TODO fill_info testcase
+#temp = controller.fill_info_and_select_package('00001', 'FI00003', 'male', '0980111111', 'mark', '01/10/20', '19090021434941', 'big')
+#print(temp.destination.name)
 
-admin1.add_promocode('little')
-print(Promocode.promocode_list)
-# สร้าง ReservedSeat
-# controller.flight_instance_list[0].add_reserved_seat(ReservedSeat("1", "A"))
-# print(controller.select_seat("FI00001"))
+#TODO promocode testcase
+#admin1.add_promocode('little')
+#print(Promocode.promocode_list)
+
+#TODO ReservedSeat testcase
+#controller.flight_instance_list[0].add_reserved_seat(ReservedSeat("1", "A"))
+#print(controller.select_seat("FI00001"))
+
+#TODO view_account_detail
+# controller.fill_info_and_select_package('00001', 'FI00003', 'male', '0980111111', 'mark', '01/10/20', '19090021434941', 'big')
+# controller.fill_info_and_select_package('00001', 'FI00003', 'male', '0980111111', 'mark', '01/10/20', '19090021434941', 'big')
+# print(user1.view_account_detail())

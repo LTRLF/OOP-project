@@ -614,19 +614,19 @@ controller.fill_info_and_select_package('00001', 'FI00003', 'male', '0980111111'
 app = FastAPI()
 
 #TODO search_flight FastAPI
-@app.get("/search_flight")
-def search_flight(departure : str, destination : str, departure_date : str, total_passenger : int, promocode : Union[str, None] = None):
-    return controller.search_flight(departure, destination, departure_date, total_passenger, promocode = None)
+# @app.get("/search_flight")
+# def search_flight(departure : str, destination : str, departure_date : str, total_passenger : int, promocode : Union[str, None] = None):
+    # return controller.search_flight(departure, destination, departure_date, total_passenger, promocode = None)
     # return "Hi"
 
-if __name__ == "__main__":
-    uvicorn.run("test1:app", host = "127.0.0.1", port = 8000, log_level = "info")
+# if __name__ == "__main__":
+    # uvicorn.run("test1:app", host = "127.0.0.1", port = 8000, log_level = "info")
 
 #TODO view_account_info FastAPI
-@app.get("/view_account_detail")
-def view_account_info(user_id : str):
-    user = controller.search_user_by_user_id(user_id)
-    return user.view_account_detail()
+# @app.get("/view_account_detail")
+# def view_account_info(user_id : str):
+    # user = controller.search_user_by_user_id(user_id)
+    # return user.view_account_detail()
 
 
 #TODO ReservedSeat FastAPI

@@ -19,29 +19,35 @@ class Controller:
         flight_list = {}
         for that_flight in self.__flight_instance_list:
             airplane = that_flight.airplane
-            if that_flight.departure.name == departure and that_flight.destination.name == destination and that_flight.departure_date == departure_date:
+            if that_flight.departure == departure and that_flight.destination == destination and that_flight.departure_date == departure_date:
                 if (airplane.total_seat - (that_flight.count_reserverd_seat_type("hot_seat") + that_flight.count_reserverd_seat_type("standard_seat"))) >= total_passenger:
-                    #remaining_hot_seat = airplane.count_seat_type("hot_seat") - that_flight.count_reserverd_seat_type("hot_seat")
+                    
                     remaining_std_seat = airplane.count_seat_type("standard_seat") - that_flight.count_reserverd_seat_type("standard_seat")
                     
                     if remaining_std_seat > 0:
                         lowest_price = airplane.seat_list["standard_seat"][0].price
                     else:
-                        lowest_price = airplane.seat_list["standard_seat"][0].price
+                        lowest_price = airplane.seat_list["hot_seat"][0].price
 
-                    total_lowest_price = lowest_price * total_passenger
+                    total_lowest_price   = lowest_price * total_passenger
                     total_discount_price = total_lowest_price
+                    departure_time       = that_flight.departure_time
+                    destination_time     = that_flight.destination_time
+                    flight_list[that_flight.flight_instance_no] = [departure.airport_code, departure_time, destination.airport_code, destination_time, departure_date, float(total_lowest_price)]
+                    
                     if promocode is not None:
                         for that_promocode in Promocode.promocode_list:
                             if that_promocode.code == promocode:
                                 discount_price =  lowest_price - (lowest_price * (that_promocode.discount/100))
                                 break
                         total_discount_price = discount_price * total_passenger
-                        flight_list[that_flight.flight_instance_no] = [departure, destination, departure_date, float(total_lowest_price), float(total_discount_price)]
-                    else:
-                        flight_list[that_flight.flight_instance_no] = [departure, destination, departure_date, float(total_lowest_price)]
+                        flight_list[that_flight.flight_instance_no].append(total_discount_price)
 
         return flight_list
+
+    def add_guest(self, guest):
+        self.__guest_list.append(guest)
+        Guest.guest_number += 1
 
     def add_admin(self, admin):
         self.__admin_list.append(admin)
@@ -124,6 +130,14 @@ class Controller:
     def flight_instance_list(self):
         return self.__flight_instance_list
 
+    @property
+    def user_list(self):
+        return self.__user_list
+
+    @property
+    def guest_list(self):
+        return self.__guest_list
+
 class Admin:
     def __init__(self, admin_id):
         self.__admin_id = admin_id
@@ -135,14 +149,36 @@ class Admin:
         Promocode.promocode_list.append(code)
 
 class Guest:
-    def __init__(self, guest_id):
-        self.__guest_id = guest_id
+    guest_number = 1
+    def __init__(self):
+        self.__guest_id = f"G{Guest.guest_number:05d}"
+    
+    def create_account(self, email, password):
+        for user in controller.user_list:
+            if email == user.email: 
+                return 'Used Email'
+        
+        controller.add_user(User(email, password))
+        User.user_number += 1
+    
+    def login(self, user_name, password):
+        pass
+    
+    @property
+    def guest_id(self):
+        return self.__guest_id
 
 class User(Guest):
-    def __init__(self, email, user_id):
+    user_number = 1
+    def __init__(self, email, password):
         self.__email = email
-        self.__user_id = user_id
+        self.__user_id = f"U{User.user_number:05d}"
         self.__booking_list = []
+        self.__password = password
+
+    @property
+    def email(self):
+        return self.__email
     
     def view_account_detail(self):
         account_detail = []
@@ -150,8 +186,8 @@ class User(Guest):
         for that_booking in self.__booking_list:
             booking_info = []
             booking_info.append(that_booking.booking_no)
-            booking_info.append(that_booking.departure.name)
-            booking_info.append(that_booking.destination.name)
+            booking_info.append(that_booking.departure.airport_name)
+            booking_info.append(that_booking.destination.airport_name)
             booking_info.append(that_booking.departure_date)
             booking_info.append(that_booking.departure_time)
             booking_info.append(that_booking.arriving_date)
@@ -200,7 +236,7 @@ class Promocode:
 class Booking:
     booking_number = 1
     def __init__(self, booking_no, destination, departure, departure_date, departure_time, arriving_date, arriving_time):
-        self.__booking_no = Booking.booking_number
+        self.__booking_no = f"Booking{Booking.booking_number:05d}"
         self.__passenger_list = []
         self.__destination = destination
         self.__departure = departure
@@ -354,15 +390,13 @@ class Boardingpass:
     def luggage_list(self):
         return self.__luggage_list
 
-
 class Luggage:
     luggage_number = 1
     def __init__(self, package, luggage_id, price):
         self.__owner = None
         self.__package = package
-        self.__luggage_id = Luggage.luggage_number
+        self.__luggage_id = f"Luggage{Luggage.luggage_number:05d}"
         self.__price = price
-
 
     def set_owner(self, owner):
         self.__owner = owner
@@ -376,16 +410,21 @@ class Luggage:
         return self.__price
 
 class Airport:
-    def __init__(self, name):
-        self.__name = name
+    def __init__(self, airport_name, airport_code):
+        self.__airport_name = airport_name
+        self.__airport_code = airport_code
         self.__current_airplane_list = []
 
     def get_current_airplane(self):
         return self.__current_airplane_list
     
     @property
-    def name(self):
-        return self.__name
+    def airport_name(self):
+        return self.__airport_name
+    
+    @property
+    def airport_code(self):
+        return self.__airport_code
 
 class Flight:
     def __init__(self, departure, destination, flight_no):
@@ -493,9 +532,8 @@ class Seat:
         return self.__price
 
 class ReservedSeat(Seat):
-    def __init__(self, row, column):
-        super().__init__(row, column, None , None)
-    
+    def __init__(self, row, column, seat_type):
+        super().__init__(row, column, seat_type , None)
     
 controller = Controller('AirAsia')
 
@@ -505,12 +543,9 @@ airplane3 = Airplane('003', 6)
 airplane4 = Airplane('004', 6)
 airplane5 = Airplane('005', 6)
 
-airport1 = Airport('Chiangmai')
-airport2 = Airport('Bangkok')
-airport3 = Airport('Hatyai')
-
-user1 = User('kwai@gmail', '00001')
-user2 = User('kai@gmail', '00002')
+airport1 = Airport('Chaingmai', 'CNX')
+airport2 = Airport('Bangkok',   'BKK')
+airport3 = Airport('Hatyai',    'HDY')
 
 admin1 = Admin('A')
 
@@ -562,7 +597,10 @@ airplane5.add_seat(Seat("2", "B", "Standard Seat", 1000), "standard_seat")
 airplane5.add_seat(Seat("2", "C", "Standard Seat", 1000), "standard_seat")
 
 controller.add_admin(admin1)
-controller.add_user(user1)
+controller.add_guest(Guest())
+controller.guest_list[0].create_account('earn@gmail', '1234')
+controller.guest_list[0].create_account('mark@gmail', '1234')
+
 admin1.add_flight_instance(Flight_instance(airport1, airport2, "F00001", "FI00001", "25-02-2024", "9:00", "25-02-2024", "10:20", airplane1, "1"))
 admin1.add_flight_instance(Flight_instance(airport2, airport1, "F00001", "FI00002", "25-02-2024", "17:45", "25-02-2024", "19:05", airplane2, "1"))
 admin1.add_flight_instance(Flight_instance(airport1, airport2, "F00001", "FI00003", "25-02-2024", "22:35", "25-02-2024", "23:55", airplane3, "1"))
@@ -579,55 +617,56 @@ admin1.add_promocode(Promocode('C1000', 30,'25-08-2029'))
 admin1.add_promocode(Promocode('C2000', 30,'25-09-2029'))
 admin1.add_promocode(Promocode('C3000', 30,'25-10-2029'))
 
+#TODO
+print(controller.guest_list[0].guest_id)
+
 #TODO seacrh flgiht
-# print(controller.search_flight(airport3, airport1, "25-02-2024", 1))
+print(controller.search_flight(airport3, airport1, "25-02-2024", 1, "A1000"))
+print(controller.search_flight(airport1, airport2, "25-02-2024", 1))
 
 #TODO select seat
-# print(controller.select_seat("FI00001"))
+print(controller.select_seat("FI00001"))
 
 #TODO promocode testcase
-# print(Promocode.promocode_list)
+print(Promocode.promocode_list)
 
 #TODO view_account_detail
-controller.fill_info_and_select_package('00001', 'FI00003', 'male', '0980111111', 'mark', '01/10/20', '19090021434941', 'big')
-controller.fill_info_and_select_package('00001', 'FI00003', 'male', '0980111111', 'mark', '01/10/20', '19090021434941', 'big')
+controller.fill_info_and_select_package('U00001', 'FI00003', 'male', '0980111111', 'mark', '01/10/20', '19090021434941', 'big')
+controller.fill_info_and_select_package('U00001', 'FI00003', 'male', '0980111111', 'mark', '01/10/20', '19090021434941', 'big')
 
-# for result in user1.view_account_detail() :
-#     if type(result) is list : 
-#         i = 1
-#         for result2 in result :
-#             print("  ", i , "." , result2)
-#             i = i + 1
-#     else :
-#         print(result)
+for result in controller.user_list[0].view_account_detail() :
+    if type(result) is list : 
+        i = 1
+        for result2 in result :
+            print("  ", i , "." , result2)
+            i = i + 1
+    else :
+        print(result)
 
-#TODO ReservedSeat testcase
-# controller.flight_instance_list[0].add_reserved_seat(ReservedSeat("1", "A"))
-# print(controller.select_seat("FI00001"))
+# TODO ReservedSeat testcase
+controller.flight_instance_list[0].add_reserved_seat(ReservedSeat("1", "A", "hot_seat"))
+print(controller.select_seat("FI00001"))
 
 #TODO price summary
-# แตกเพราะ boooking_no ในระบบเป็น 1 ไม่ใช่ B00001
-# controller.fill_info_and_select_package('00001', 'FI00003', 'male', '0980111111', 'mark', '01/10/20', '110111011923', 'big')
-# print(controller.price_summary('00001', 1))
-
+controller.fill_info_and_select_package('U00001', 'FI00003', 'male', '0980111111', 'mark', '01/10/20', '110111011923', 'big')
+print(controller.price_summary('U00001', 'Booking00001'))
 
 app = FastAPI()
 
-#TODO search_flight FastAPI
-@app.get("/search_flight")
-def search_flight(departure : str, destination : str, departure_date : str, total_passenger : int, promocode : Union[str, None] = None):
-    return controller.search_flight(departure, destination, departure_date, total_passenger, promocode = None)
-    # return "Hi"
+# #TODO search_flight FastAPI
+# @app.get("/search_flight")
+# def search_flight(departure : str, destination : str, departure_date : str, total_passenger : int, promocode : Union[str, None] = None):
+#     return controller.search_flight(departure, destination, departure_date, total_passenger, promocode = None)
+#     # return "Hi"
 
-if __name__ == "__main__":
-    uvicorn.run("test1:app", host = "127.0.0.1", port = 8000, log_level = "info")
+# if __name__ == "__main__":
+#     uvicorn.run("test1:app", host = "127.0.0.1", port = 8000, log_level = "info")
 
-#TODO view_account_info FastAPI
-@app.get("/view_account_detail")
-def view_account_info(user_id : str):
-    user = controller.search_user_by_user_id(user_id)
-    return user.view_account_detail()
-
+# #TODO view_account_info FastAPI
+# @app.get("/view_account_detail")
+# def view_account_info(user_id : str):
+#     user = controller.search_user_by_user_id(user_id)
+#     return user.view_account_detail()
 
 #TODO ReservedSeat FastAPI
 # @app.get("/select_seat")
